@@ -19,19 +19,26 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # Install Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Accept Android Licenses
+        run: yes | sdkmanager --licenses
 
       - name: Install Android Build Tools
         run: |
           sdkmanager --install "platform-tools"
           sdkmanager --install "platforms;android-35"
           sdkmanager --install "build-tools;35.0.0"
+          sdkmanager --install "build-tools;37.0.0"
           sdkmanager --install "cmdline-tools;latest"
-          yes | sdkmanager --licenses || true
 
-      # Install dependencies
+      - name: Setup Android Environment
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "$ANDROID_SDK_ROOT/build-tools/37.0.0" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -52,7 +59,6 @@ jobs:
             libffi-dev \
             libssl-dev
 
-      # Setup Buildozer
       - name: Setup Buildozer
         run: |
           python3 -m venv .venv
@@ -60,25 +66,20 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install buildozer cython==0.29.36
 
-      # Check AIDL
       - name: Check AIDL
         run: |
-          AIDL_PATH="$ANDROID_SDK_ROOT/build-tools/35.0.0/aidl"
+          AIDL_PATH="$ANDROID_SDK_ROOT/build-tools/37.0.0/aidl"
           if [ ! -x "$AIDL_PATH" ]; then
-            echo "AIDL not found or not executable"
+            echo "AIDL not found!"
             exit 1
           fi
-          echo "$ANDROID_SDK_ROOT/build-tools/35.0.0" >> "$GITHUB_PATH"
+          echo "AIDL found successfully!"
 
-      # Build APK
       - name: Build APK
         run: |
           . .venv/bin/activate
-          export ANDROID_HOME="$ANDROID_SDK_ROOT"
-          export PATH="$ANDROID_SDK_ROOT/build-tools/35.0.0:$PATH"
           buildozer -v android debug
 
-      # Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
