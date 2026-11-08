@@ -1,42 +1,17 @@
 
-# ==========================================
-# NHA APK BUILD WORKFLOW
-# ==========================================
-
 name: Build NHA APK
-
-# ==========================================
-# WHEN TO RUN
-# ==========================================
 
 on:
   push:
-
   workflow_dispatch:
 
-# ==========================================
-# BUILD SETTINGS
-# ==========================================
-
 jobs:
-
   build:
-
     runs-on: ubuntu-22.04
 
     steps:
-
-      # --------------------------------------
-      # STEP 1: DOWNLOAD PROJECT
-      # --------------------------------------
-
       - name: Checkout repository
         uses: actions/checkout@v4
-
-
-      # --------------------------------------
-      # STEP 2: INSTALL JAVA
-      # --------------------------------------
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -44,150 +19,49 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-
-      # --------------------------------------
-      # STEP 3: INSTALL ANDROID SDK
-      # --------------------------------------
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-
-      # --------------------------------------
-      # STEP 4: INSTALL ANDROID COMPONENTS
-      # --------------------------------------
-
       - name: Install Android SDK components
         run: |
-
           sdkmanager --install "platform-tools"
-
           sdkmanager --install "platforms;android-35"
-
           sdkmanager --install "build-tools;35.0.0"
-
           sdkmanager --install "cmdline-tools;latest"
-
           sdkmanager --install "platforms;android-34"
-
           sdkmanager --install "build-tools;34.0.0"
-
-
-      # --------------------------------------
-      # STEP 5: ACCEPT ANDROID LICENSES
-      # --------------------------------------
-
-      - name: Accept Android licenses
-        run: |
-
-          yes | sdkmanager --licenses || true
-
-
-      # --------------------------------------
-      # STEP 6: SET ANDROID ENVIRONMENT
-      # --------------------------------------
 
       - name: Set Android SDK environment
         run: |
-
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-
           echo "$ANDROID_SDK_ROOT/build-tools/35.0.0" >> $GITHUB_PATH
-
           echo "$ANDROID_SDK_ROOT/build-tools/34.0.0" >> $GITHUB_PATH
 
-
-      # --------------------------------------
-      # STEP 7: INSTALL SYSTEM DEPENDENCIES
-      # --------------------------------------
-
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
-
           sudo apt-get update
-
           sudo apt-get install -y \
-            python3-pip \
-            python3-venv \
-            git \
-            zip \
-            unzip \
-            autoconf \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo6 \
-            cmake \
-            libffi-dev \
-            libssl-dev
-
-
-      # --------------------------------------
-      # STEP 8: INSTALL BUILDOZER
-      # --------------------------------------
+            python3-pip python3-venv git zip unzip \
+            autoconf libtool pkg-config zlib1g-dev \
+            libncurses5-dev libncursesw5-dev libtinfo6 \
+            cmake libffi-dev libssl-dev
 
       - name: Setup Buildozer
         run: |
-
           python3 -m venv .venv
-
           . .venv/bin/activate
-
           pip install --upgrade pip setuptools wheel
-
           pip install buildozer cython==0.29.36
-
-
-      # --------------------------------------
-      # STEP 9: CHECK AIDL
-      # --------------------------------------
-
-      - name: Check Android AIDL
-        run: |
-
-          echo "Checking Android SDK..."
-
-          find "$ANDROID_SDK_ROOT" -name aidl -type f
-
-          test -f "$ANDROID_SDK_ROOT/build-tools/35.0.0/aidl"
-
-          echo "AIDL found successfully"
-
-
-      # --------------------------------------
-      # STEP 10: BUILD NHA APK
-      # --------------------------------------
 
       - name: Build NHA APK
         run: |
-
           . .venv/bin/activate
-
           buildozer -v android debug
 
-
-      # --------------------------------------
-      # STEP 11: UPLOAD APK
-      # --------------------------------------
-
-      - name: Upload NHA APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
-
         with:
-
           name: NHA-APK
-
           path: bin/*.apk
-
           if-no-files-found: error
-
-
-# ==========================================
-# END OF NHA BUILD WORKFLOW
-# ==========================================
