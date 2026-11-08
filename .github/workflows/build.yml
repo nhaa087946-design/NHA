@@ -19,23 +19,19 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # FIX AIDL: Setup Android SDK
+      # Install Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK
+      - name: Install Android Build Tools
         run: |
           sdkmanager --install "platform-tools"
           sdkmanager --install "platforms;android-35"
           sdkmanager --install "build-tools;35.0.0"
           sdkmanager --install "cmdline-tools;latest"
+          yes | sdkmanager --licenses || true
 
-      - name: Set Android SDK paths
-        run: |
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "$ANDROID_SDK_ROOT/build-tools/35.0.0" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-
+      # Install dependencies
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -56,6 +52,7 @@ jobs:
             libffi-dev \
             libssl-dev
 
+      # Setup Buildozer
       - name: Setup Buildozer
         run: |
           python3 -m venv .venv
@@ -63,17 +60,24 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install buildozer cython==0.29.36
 
-      # CHECK AIDL
+      # Check AIDL
       - name: Check AIDL
         run: |
-          find "$ANDROID_SDK_ROOT" -name aidl -type f
-          test -f "$ANDROID_SDK_ROOT/build-tools/35.0.0/aidl"
+          AIDL_PATH="$ANDROID_SDK_ROOT/build-tools/35.0.0/aidl"
+          if [ ! -f "$AIDL_PATH" ]; then
+            echo "AIDL not found in Build Tools"
+            exit 1
+          fi
+          echo "$ANDROID_SDK_ROOT/build-tools/35.0.0" >> "$GITHUB_PATH"
 
+      # Build APK
       - name: Build APK
         run: |
           . .venv/bin/activate
+          export ANDROID_HOME="$ANDROID_SDK_ROOT"
           buildozer -v android debug
 
+      # Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
