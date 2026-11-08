@@ -19,16 +19,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK tools
-        run: |
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-35"
-          sdkmanager "build-tools;35.0.0"
-          sdkmanager "cmdline-tools;latest"
-
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -66,5 +56,4 @@ jobs:
         with:
           name: NHA-APK
           path: bin/*.apk
-          if-no-files-found: error
           
