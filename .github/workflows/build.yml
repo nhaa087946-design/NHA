@@ -19,6 +19,23 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # FIX AIDL: Setup Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: |
+          sdkmanager --install "platform-tools"
+          sdkmanager --install "platforms;android-35"
+          sdkmanager --install "build-tools;35.0.0"
+          sdkmanager --install "cmdline-tools;latest"
+
+      - name: Set Android SDK paths
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "$ANDROID_SDK_ROOT/build-tools/35.0.0" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -45,6 +62,12 @@ jobs:
           . .venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install buildozer cython==0.29.36
+
+      # CHECK AIDL
+      - name: Check AIDL
+        run: |
+          find "$ANDROID_SDK_ROOT" -name aidl -type f
+          test -f "$ANDROID_SDK_ROOT/build-tools/35.0.0/aidl"
 
       - name: Build APK
         run: |
