@@ -23,22 +23,11 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Accept Android Licenses
-        run: |
-          yes | sdkmanager --licenses || true
+        run: yes | sdkmanager --licenses
 
       - name: Install Android SDK Packages
         run: |
-          sdkmanager --install "platform-tools"
-          sdkmanager --install "platforms;android-35"
-          sdkmanager --install "build-tools;35.0.0"
-          sdkmanager --install "cmdline-tools;latest"
-
-      - name: Setup Android Environment
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/build-tools/35.0.0" >> $GITHUB_PATH
+          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Install dependencies
         run: |
@@ -69,12 +58,12 @@ jobs:
 
       - name: Check AIDL
         run: |
-          AIDL_PATH="$ANDROID_HOME/build-tools/debug.0.0/aidl"
-          if [ ! -x "$AIDL_PATH" ]; then
-            echo "ERROR: AIDL not found!"
+          AIDL_PATH="$ANDROID_HOME/build-tools/35.0.0/aidl"
+          test -x "$AIDL_PATH" || {
+            echo "AIDL not found!"
             exit 1
-          fi
-          echo "AIDL found successfully!"
+          }
+          echo "$ANDROID_HOME/build-tools/35.0.0" >> "$GITHUB_PATH"
 
       - name: Build APK
         run: |
@@ -86,5 +75,5 @@ jobs:
         with:
           name: NHA-APK
           path: bin/*.apk
-          if-no-files-found:
+          if-no-files-found: error
           
