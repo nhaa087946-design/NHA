@@ -23,11 +23,22 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Accept Android Licenses
-        run: yes | sdkmanager --licenses
+        run: |
+          yes | sdkmanager --licenses || true
 
       - name: Install Android SDK Packages
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager --install "platform-tools"
+          sdkmanager --install "platforms;android-35"
+          sdkmanager --install "build-tools;35.0.0"
+          sdkmanager --install "cmdline-tools;latest"
+
+      - name: Setup Android Environment
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "$ANDROID_SDK_ROOT/build-tools/35.0.0" >> "$GITHUB_PATH"
 
       - name: Install dependencies
         run: |
@@ -58,18 +69,19 @@ jobs:
 
       - name: Check AIDL
         run: |
-          AIDL_PATH="$ANDROID_HOME/build-tools/35.0.0/aidl"
-          if [ ! -f "$AIDL_PATH" ]; then
-            echo "AIDL not found!"
+          AIDL_PATH="$ANDROID_SDK_ROOT/build-tools/35.0.0/aidl"
+          if [ ! -x "$AIDL_PATH" ]; then
+            echo "AIDL not found or not executable"
             exit 1
           fi
-          chmod +x "$AIDL_PATH"
-          echo "$ANDROID_HOME/build-tools/35.0.0" >> "$GITHUB_PATH"
+          echo "AIDL found successfully"
 
       - name: Build APK
         run: |
           . .venv/bin/activate
           export ANDROID_HOME="$ANDROID_SDK_ROOT"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH"
           buildozer -v android debug
 
       - name: Upload APK
