@@ -69,7 +69,7 @@ jobs:
 
       - name: Check AIDL
         run: |
-          AIDL_PATH="$ANDROID_HOME/build-tools/35.0.0/aidl"
+          AIDL_PATH="$ANDROID_HOME/build-tools/debug.0.0/aidl"
           if [ ! -x "$AIDL_PATH" ]; then
             echo "ERROR: AIDL not found!"
             exit 1
